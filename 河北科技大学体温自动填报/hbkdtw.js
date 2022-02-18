@@ -21,16 +21,11 @@ let param = `stuNum=${twStuNum}&pwd=${twPwd}&vcode=`;
     .catch((e) => $.logErr(e))
     .finally(() => $.done())
 async function lsj() {
-
-    notifyMsg+=`体温填报开始\n`
     await getCookies();
     await dl();
     await getSid();
     await getStuId();
-    await ttw();
-    await getIsFinish();
-    
-   await $.notify.sendNotify(`${$.name}`, `${notifyMsg}`)
+    await getIsFinish1();
 }
 //获取cookies
 function getCookies(timeout = 0) {
@@ -145,7 +140,39 @@ function getStuId(timeout = 0) {
 }
 
 
+//获取完成情况
+function getIsFinish1(timeout = 0) {
+    return new Promise((resolve) => {
+        let url = {
+            url: `http://xscfw.hebust.edu.cn/survey/index
+`,
+            headers: {
+                        'Host': 'xscfw.hebust.edu.cn',
+                        'Cookie':twcookie
 
+                     },
+        }
+        $.get(url, async (err, resp, data) => {
+            try {
+            
+                let isFinish = resp.rawBody.toString().match(/\u5df2\u5b8c\u6210/)//\s是空格 
+                if(!isFinish){
+                   await ttw();
+                   await getIsFinish2();
+                }       
+                
+
+      
+
+            } catch (e) {
+                 $.logErr(e, resp);
+            } finally {
+                resolve()
+            }
+        }, timeout)
+    })
+
+}
 
 //填体温
 function ttw(timeout = 0) {
@@ -175,7 +202,7 @@ function ttw(timeout = 0) {
 
 }
 //获取完成情况
-function getIsFinish(timeout = 0) {
+function getIsFinish2(timeout = 0) {
     return new Promise((resolve) => {
         let url = {
             url: `http://xscfw.hebust.edu.cn/survey/index
@@ -189,6 +216,7 @@ function getIsFinish(timeout = 0) {
         $.get(url, async (err, resp, data) => {
             try {
             
+                $.log( `体温填报结果：`)
                 let isFinish = resp.rawBody.toString().match(/\u5df2\u5b8c\u6210/)//\s是空格 
                 if(!isFinish){
                     isFinish='未完成'
@@ -197,6 +225,7 @@ function getIsFinish(timeout = 0) {
                 $.log( `体温填报结果：`+isFinish)
                 
                 notifyMsg+=`\n体温填报结果：${isFinish}`
+                $.notify.sendNotify(`${$.name}`, `${notifyMsg}`)
                 
 
       
